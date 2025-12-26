@@ -5,11 +5,46 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StudentRequest;
 use App\Http\Requests\UpdateStudentRequest;
 use App\Models\Student;
-use App\Models\StudentCard;
+use App\Models\Subject;
+use Auth;
+use Illuminate\Auth\Access\Gate;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-class StudentController extends Controller
+
+class StudentController extends Controller implements HasMiddleware
 {
+    public static function middleware()
+    {
+        return [
+            new Middleware('auth:sanctum', except: ['index', 'show', 'addSubjectsToStudent', 'getStudentSubjects', 'getSubjectStudents'])
+        ];
+    }
+    public function addSubjectsToStudent(Request $request, $studentID)
+    {
+        $student = Student::findOrFail($studentID);
+        $student->subjects()->attach($request->subject_id);
+        return response()->json('subject attached successfuly', 200, );
+
+    }
+
+    public function getStudentSubjects($studentID)
+    {
+        $subjects = Student::findOrFail($studentID)->subjects;
+        return response()->json($subjects, 200);
+    }
+    public function getSubjectStudents($subjectID)
+    {
+        $students = Subject::findOrFail($subjectID)->students;
+        return response()->json($students, 200);
+    }
+
+
+
+
+
+
     /**
      * Display a listing of the resource.
      */
@@ -26,7 +61,13 @@ class StudentController extends Controller
     public function store(StudentRequest $request)
     {
         $data = $request->validated();
-        $student_data = Student::create($data);
+        // $student_data = Student::create($data);
+        $student_data = Student::create([
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'age' => $data['age'],
+            'user_id' => Auth()->id()
+        ]);
         return response()->json($student_data, 201);
     }
 
@@ -51,17 +92,18 @@ class StudentController extends Controller
      */
     public function update(UpdateStudentRequest $request, $id)
     {
+        \Illuminate\Support\Facades\Gate::authorize('modify', $id);
         $data = $request->validated();
-        $student = Student::find($id);
-        if (!$student) {
+        $student_data = Student::find($id);
+        if (!$student_data) {
             return response()->json(['message' => 'student not found'], 404);
         }
-        $student->update(array_filter([
-            'name' => $data['name'] ?? $student->name,
-            'email' => $data['email'] ?? $student->email,
-            'age' => $data['age'] ?? $student->age,
+        $student_data->update(array_filter([
+            'name' => $data['name'] ?? $student_data->name,
+            'email' => $data['email'] ?? $student_data->email,
+            'age' => $data['age'] ?? $student_data->age,
         ]));
-        return response()->json($student, 200);
+        return response()->json($student_data, 200);
     }
 
     /**
@@ -69,6 +111,8 @@ class StudentController extends Controller
      */
     public function destroy($id)
     {
+        \Illuminate\Support\Facades\Gate::authorize('modify', $id);
+
         $data = Student::find($id);
         $data->delete();
         return response()->json($data, 204);
