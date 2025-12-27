@@ -1,5 +1,5 @@
 <?php
-
+//add commit to test
 /*
 |--------------------------------------------------------------------------
 | Test Case
@@ -12,7 +12,7 @@
 */
 
 pest()->extend(Tests\TestCase::class)
- // ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
+    // ->use(Illuminate\Foundation\Testing\RefreshDatabase::class)
     ->in('Feature');
 
 /*
