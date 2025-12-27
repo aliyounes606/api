@@ -50,5 +50,6 @@ class AuthController extends Controller
             'massage' => 'You are logged out'
         ];
     }
+    // this  is a AuthController
 
 }
